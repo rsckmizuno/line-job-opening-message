@@ -1,0 +1,862 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>タスワーク 求人LINE配信テキスト生成ツール</title>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@300;400;500;700;900&family=M+PLUS+Rounded+1c:wght@400;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg:#f5f3ef; --card:#ffffff; --border:#e2ddd5;
+    --text:#2c2820; --text-sub:#7a7368;
+    --accent:#06c755; --accent-dark:#05a847; --accent-light:#e8faf0;
+    --line-green:#06c755;
+    --warm-brown:#8b6f4e; --warm-brown-light:#f7f2ec;
+    --red:#d94f4f;
+    --shadow:0 2px 12px rgba(44,40,32,0.06);
+    --shadow-lg:0 8px 32px rgba(44,40,32,0.1);
+    --radius:14px; --radius-sm:8px;
+    --blue:#4a90d9; --coral:#e8837c;
+  }
+  *{margin:0;padding:0;box-sizing:border-box;}
+  body{font-family:'Noto Sans JP',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;line-height:1.7;}
+
+  /* HEADER */
+  .header{background:linear-gradient(135deg,var(--line-green) 0%,#04a74b 100%);padding:28px 24px 24px;color:#fff;position:relative;overflow:hidden;}
+  .header::after{content:'';position:absolute;top:-40%;right:-10%;width:300px;height:300px;background:rgba(255,255,255,0.07);border-radius:50%;}
+  .header h1{font-family:'M PLUS Rounded 1c','Noto Sans JP',sans-serif;font-size:22px;font-weight:700;position:relative;z-index:1;}
+  .header p{font-size:13px;opacity:0.85;margin-top:4px;position:relative;z-index:1;}
+
+  /* LAYOUT */
+  .container{max-width:960px;margin:0 auto;padding:24px 16px 80px;}
+  .two-col{display:grid;grid-template-columns:1fr 1fr;gap:20px;align-items:start;}
+  @media(max-width:720px){.two-col{grid-template-columns:1fr;}}
+
+  /* CARD */
+  .card{background:var(--card);border:1px solid var(--border);border-radius:var(--radius);padding:20px;box-shadow:var(--shadow);margin-bottom:16px;}
+  .card-title{font-size:14px;font-weight:700;color:var(--warm-brown);margin-bottom:14px;display:flex;align-items:center;gap:6px;}
+  .card-title .icon{width:20px;height:20px;background:var(--warm-brown-light);border-radius:6px;display:flex;align-items:center;justify-content:center;font-size:12px;}
+
+  /* MODE TOGGLE */
+  .mode-toggle{display:flex;background:var(--card);border:1px solid var(--border);border-radius:var(--radius-sm);overflow:hidden;margin-bottom:20px;}
+  .mode-btn{flex:1;padding:10px;border:none;background:transparent;font-family:'Noto Sans JP',sans-serif;font-size:13px;font-weight:500;color:var(--text-sub);cursor:pointer;transition:all 0.2s;}
+  .mode-btn.active{background:var(--accent);color:#fff;}
+
+  /* FORM */
+  .form-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:12px;}
+  .form-group{display:flex;flex-direction:column;}
+  .form-group.full{grid-column:1/-1;}
+  .form-group label{font-size:11px;font-weight:500;color:var(--text-sub);margin-bottom:4px;}
+  .form-group input,.form-group select{padding:8px 10px;border:1px solid var(--border);border-radius:6px;font-size:13px;font-family:'Noto Sans JP',sans-serif;color:var(--text);background:#fafaf8;transition:border-color 0.2s;}
+  .form-group input:focus,.form-group select:focus{outline:none;border-color:var(--accent);background:#fff;}
+  .field-textarea{width:100%;min-height:38px;padding:8px 10px;border:1px solid var(--border);border-radius:6px;font-size:13px;font-family:'Noto Sans JP',sans-serif;color:var(--text);background:#fafaf8;line-height:1.6;resize:none;overflow:hidden;transition:border-color 0.2s;}
+  .field-textarea:focus{outline:none;border-color:var(--accent);background:#fff;}
+  .char-count{font-size:10px;color:var(--text-sub);text-align:right;margin-top:2px;}
+  .char-count.over{color:var(--red);font-weight:700;}
+
+  /* JOB ENTRY */
+  .job-entry{background:var(--warm-brown-light);border-radius:var(--radius-sm);padding:14px;margin-bottom:10px;border-left:3px solid var(--warm-brown);animation:slideIn 0.25s ease;}
+  @keyframes slideIn{from{opacity:0;transform:translateY(-8px);}to{opacity:1;transform:translateY(0);}}
+  .job-entry-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;}
+  .job-entry-num{font-family:'M PLUS Rounded 1c',sans-serif;font-weight:700;font-size:15px;color:var(--warm-brown);}
+  .btn-remove{background:none;border:1px solid #ddd;color:var(--text-sub);font-size:11px;padding:3px 10px;border-radius:20px;cursor:pointer;font-family:'Noto Sans JP',sans-serif;}
+  .btn-remove:hover{border-color:var(--red);color:var(--red);}
+  .btn-add{width:100%;padding:10px;border:2px dashed var(--border);border-radius:var(--radius-sm);background:transparent;color:var(--text-sub);font-size:13px;font-family:'Noto Sans JP',sans-serif;cursor:pointer;transition:all 0.2s;margin-bottom:16px;}
+  .btn-add:hover{border-color:var(--accent);color:var(--accent);background:var(--accent-light);}
+
+  /* BUTTONS */
+  .btn{display:inline-flex;align-items:center;justify-content:center;gap:6px;padding:12px 24px;border:none;border-radius:var(--radius-sm);font-family:'Noto Sans JP',sans-serif;font-size:14px;font-weight:700;cursor:pointer;transition:all 0.2s;width:100%;}
+  .btn-primary{background:var(--accent);color:#fff;}
+  .btn-primary:hover{background:var(--accent-dark);transform:translateY(-1px);}
+  .btn-secondary{background:var(--warm-brown-light);color:var(--warm-brown);}
+  .generate-buttons{display:flex;gap:8px;margin-bottom:16px;}
+  .generate-buttons .btn{flex:1;font-size:13px;padding:14px 8px;line-height:1.4;}
+  .btn-flex{background:var(--blue);color:#fff;box-shadow:0 2px 8px rgba(74,144,217,0.25);}
+  .btn-flex:hover{background:#3a7bc8;transform:translateY(-1px);}
+  .btn-carousel{background:var(--coral);color:#fff;box-shadow:0 2px 8px rgba(232,131,124,0.25);}
+  .btn-carousel:hover{background:#d6726b;transform:translateY(-1px);}
+  .btn-detail{background:#3a8a3a;color:#fff;box-shadow:0 2px 8px rgba(58,138,58,0.25);}
+  .btn-detail:hover{background:#2e7a2e;transform:translateY(-1px);}
+
+  /* PREVIEW */
+  .preview-area{position:sticky;top:24px;}
+  .preview-phone{background:#fff;border:1px solid var(--border);border-radius:20px;padding:16px;min-height:200px;box-shadow:var(--shadow-lg);}
+  .preview-label{text-align:center;font-size:11px;font-weight:500;color:var(--text-sub);padding-bottom:12px;border-bottom:1px solid var(--border);margin-bottom:14px;}
+  .preview-type-badge{display:inline-block;padding:2px 10px;border-radius:10px;font-size:10px;font-weight:700;margin-left:6px;}
+  .badge-flex{background:#e8f0fb;color:var(--blue);}
+  .badge-carousel{background:#fde8e6;color:var(--coral);}
+  .badge-detail{background:#e8f5e8;color:#3a8a3a;}
+  .preview-empty{text-align:center;padding:60px 20px;color:#ccc;font-size:13px;}
+
+  /* PREVIEW CARDS */
+  .preview-card{background:#f7f7f5;border-radius:12px;padding:14px 16px;font-size:13px;line-height:1.8;white-space:pre-wrap;word-break:break-all;color:var(--text);margin-bottom:10px;position:relative;}
+  .preview-card-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;}
+  .preview-card-num{font-size:11px;font-weight:700;color:var(--text-sub);}
+  .preview-card-actions{display:flex;gap:4px;}
+  .btn-copy-sm{background:var(--line-green);color:#fff;border:none;padding:4px 12px;border-radius:16px;font-size:11px;font-weight:600;font-family:'Noto Sans JP',sans-serif;cursor:pointer;transition:all 0.2s;}
+  .btn-copy-sm:hover{background:var(--accent-dark);}
+  .btn-copy-sm.copied{background:var(--warm-brown);}
+  .btn-dl-sm{background:var(--warm-brown);color:#fff;border:none;padding:4px 12px;border-radius:16px;font-size:11px;font-weight:600;font-family:'Noto Sans JP',sans-serif;cursor:pointer;transition:all 0.2s;}
+  .btn-dl-sm:hover{background:#7a6040;}
+  .btn-dl-sm.done{background:#999;}
+  .preview-card-body{white-space:pre-wrap;word-break:break-all;}
+
+  .copy-all-section{margin-top:12px;}
+  .btn-copy-all{background:var(--line-green);color:#fff;font-size:14px;font-weight:700;padding:12px 24px;border:none;border-radius:12px;box-shadow:0 4px 16px rgba(6,199,85,0.3);width:100%;cursor:pointer;transition:all 0.2s;font-family:'Noto Sans JP',sans-serif;}
+  .btn-copy-all:hover{background:var(--accent-dark);transform:translateY(-2px);}
+  .btn-copy-all.copied{background:var(--warm-brown);}
+
+  /* PASTE */
+  .paste-slot{background:var(--warm-brown-light);border-radius:var(--radius-sm);padding:12px;margin-bottom:8px;border-left:3px solid var(--warm-brown);animation:slideIn 0.25s ease;}
+  .paste-slot-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;}
+  .paste-slot-num{font-family:'M PLUS Rounded 1c',sans-serif;font-weight:700;font-size:13px;color:var(--warm-brown);}
+  .paste-slot-area{width:100%;min-height:48px;padding:10px;border:2px dashed var(--border);border-radius:6px;font-family:'Noto Sans JP',sans-serif;font-size:12px;line-height:1.5;resize:vertical;background:#fff;color:var(--text);transition:border-color 0.2s;}
+  .paste-slot-area:focus{outline:none;border-color:var(--accent);border-style:solid;}
+  .info-box{background:var(--accent-light);border-radius:var(--radius-sm);padding:12px 14px;font-size:12px;color:#2a7a45;margin-bottom:16px;line-height:1.6;}
+  .btn-row{display:flex;gap:8px;margin-top:12px;}
+  .btn-row .btn{flex:1;padding:10px;font-size:13px;}
+  .toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%) translateY(80px);background:#333;color:#fff;padding:12px 28px;border-radius:30px;font-size:14px;font-weight:500;box-shadow:0 4px 20px rgba(0,0,0,0.2);transition:transform 0.3s ease,opacity 0.3s ease;opacity:0;z-index:100;pointer-events:none;}
+  .toast.show{transform:translateX(-50%) translateY(0);opacity:1;}
+
+  /* API MODE */
+  .gas-url-input{width:100%;padding:8px 10px;border:1px solid var(--border);border-radius:6px;font-size:12px;font-family:'Noto Sans JP',sans-serif;color:var(--text);background:#fafaf8;}
+  .gas-url-input:focus{outline:none;border-color:var(--accent);background:#fff;}
+  .api-input-row{display:flex;gap:8px;align-items:center;}
+  .row-number-input{flex:1;padding:10px 12px;border:2px solid var(--border);border-radius:var(--radius-sm);font-size:15px;font-family:'M PLUS Rounded 1c',sans-serif;font-weight:700;color:var(--text);text-align:center;background:#fafaf8;transition:border-color 0.2s;}
+  .row-number-input:focus{outline:none;border-color:var(--accent);background:#fff;}
+  .row-number-input::placeholder{font-weight:400;font-size:13px;color:#bbb;}
+  .api-list{max-height:300px;overflow-y:auto;}
+  .api-list::-webkit-scrollbar{width:4px;}
+  .api-list::-webkit-scrollbar-thumb{background:#ddd;border-radius:4px;}
+  .api-list-item{display:flex;justify-content:space-between;align-items:center;padding:8px 10px;border-bottom:1px solid var(--border);font-size:12px;cursor:pointer;transition:background 0.15s;}
+  .api-list-item:hover{background:var(--accent-light);}
+  .api-list-item:last-child{border-bottom:none;}
+  .api-list-row{font-family:'M PLUS Rounded 1c',sans-serif;font-weight:700;color:var(--warm-brown);min-width:40px;}
+  .api-list-name{flex:1;margin-left:8px;color:var(--text);}
+  .api-list-use{background:var(--accent);color:#fff;border:none;padding:3px 10px;border-radius:12px;font-size:10px;font-weight:600;cursor:pointer;font-family:'Noto Sans JP',sans-serif;}
+  .api-list-use:hover{background:var(--accent-dark);}
+  .loading-spinner{text-align:center;padding:20px;color:var(--text-sub);font-size:13px;}
+
+  /* SETTINGS EDIT */
+  .settings-toggle{margin-top:10px;}
+  .settings-toggle summary{font-size:11px;color:var(--text-sub);cursor:pointer;padding:4px 0;user-select:none;}
+  .settings-toggle summary:hover{color:var(--accent);}
+  .settings-body{margin-top:8px;padding:10px;background:#fafaf8;border-radius:var(--radius-sm);border:1px solid var(--border);}
+  .settings-list{display:flex;flex-wrap:wrap;gap:4px;margin-bottom:8px;min-height:24px;}
+  .settings-tag{display:inline-flex;align-items:center;gap:4px;padding:3px 10px;background:var(--card);border:1px solid var(--border);border-radius:16px;font-size:11px;color:var(--text);animation:slideIn 0.15s ease;}
+  .settings-tag-del{background:none;border:none;color:#ccc;font-size:13px;cursor:pointer;padding:0 2px;line-height:1;font-family:sans-serif;}
+  .settings-tag-del:hover{color:var(--red);}
+  .settings-add-row{display:flex;gap:6px;}
+  .settings-add-row input{flex:1;padding:6px 8px;border:1px solid var(--border);border-radius:6px;font-size:12px;font-family:'Noto Sans JP',sans-serif;color:var(--text);background:#fff;}
+  .settings-add-row input:focus{outline:none;border-color:var(--accent);}
+  .settings-add-row button{padding:6px 14px;background:var(--accent);color:#fff;border:none;border-radius:6px;font-size:11px;font-weight:700;cursor:pointer;font-family:'Noto Sans JP',sans-serif;white-space:nowrap;}
+  .settings-add-row button:hover{background:var(--accent-dark);}
+</style>
+</head>
+<body>
+<div class="header">
+  <h1>📋 求人LINE配信テキスト生成</h1>
+  <p>タスワークBOシート → LINEメッセージへ</p>
+</div>
+<div class="container">
+  <div class="mode-toggle">
+    <button class="mode-btn active" onclick="setMode('manual')">✏️ 手入力</button>
+    <button class="mode-btn" onclick="setMode('paste')">📋 貼り付け</button>
+    <button class="mode-btn" onclick="setMode('api')">🔗 スプシ連携（ベータ版）</button>
+  </div>
+  <div class="two-col">
+    <div>
+      <!-- Paste Mode -->
+      <div class="card" id="paste-mode" style="display:none;">
+        <div class="card-title"><span class="icon">📋</span>スプレッドシートから貼り付け</div>
+        <div class="info-box">💡 1つの欄に1行（1求人）ずつ貼り付けてください。<br>複数求人は「＋ 貼り付け欄を追加」で欄を増やしてください。</div>
+        <div id="paste-slots"></div>
+        <button class="btn-add" onclick="addPasteSlot()">＋ 貼り付け欄を追加</button>
+        <div class="btn-row">
+          <button class="btn btn-primary" onclick="parseAllSlots()">🔄 解析して取り込み</button>
+          <button class="btn btn-secondary" onclick="clearAllSlots()">クリア</button>
+        </div>
+      </div>
+      <!-- API Mode -->
+      <div id="api-mode" style="display:none;">
+        <div class="card">
+          <div class="card-title"><span class="icon">⚙</span>GAS API 設定</div>
+          <div class="form-group full">
+            <label>GAS WebアプリURL</label>
+            <input id="gasUrl" class="gas-url-input" placeholder="https://script.google.com/macros/s/xxxxx/exec" oninput="saveGasUrl()">
+          </div>
+          <div style="margin-top:8px;font-size:11px;color:var(--text-sub);">※ 初回のみ設定。ブラウザに保存されます。</div>
+        </div>
+        <div class="card">
+          <div class="card-title"><span class="icon">🔍</span>行番号で取得</div>
+          <div class="info-box">💡 タスワークBOシートの行番号を入力してデータを取得します。<br>カンマ区切りで複数行も可能（例: 3,5,8）</div>
+          <div class="api-input-row">
+            <input id="rowInput" class="row-number-input" type="text" placeholder="行番号（例: 3 または 3,5,8）" onkeydown="if(event.key==='Enter')fetchRows()">
+            <button class="btn btn-primary" onclick="fetchRows()" style="width:auto;padding:10px 20px;" id="fetchBtn">取得</button>
+          </div>
+          <div style="margin-top:10px;">
+            <button class="btn btn-secondary" onclick="fetchList()" id="listBtn" style="font-size:12px;padding:8px;">📋 クライアント一覧を表示</button>
+          </div>
+        </div>
+        <div id="api-list-area" style="display:none;" class="card">
+          <div class="card-title"><span class="icon">📋</span>クライアント一覧</div>
+          <div id="api-list" class="api-list"></div>
+        </div>
+      </div>
+      <!-- Manual Mode -->
+      <div id="manual-mode">
+        <div id="job-entries"></div>
+        <button class="btn-add" onclick="addEntry()">＋ 求人を追加</button>
+      </div>
+      <!-- Advisor / Detail Settings -->
+      <div class="card">
+        <div class="card-title"><span class="icon">👤</span>担当者（求人詳細用）</div>
+        <div class="form-grid">
+          <div class="form-group">
+            <label>担当者名（プルダウン）</label>
+            <select id="advisorSelect" onchange="syncAdvisor()"></select>
+          </div>
+          <div class="form-group">
+            <label>担当者名（手入力）</label>
+            <input id="advisorCustom" placeholder="リストにない場合" oninput="syncAdvisor()">
+          </div>
+        </div>
+        <details class="settings-toggle">
+          <summary>⚙ リスト編集</summary>
+          <div class="settings-body">
+            <div class="settings-list" id="advisorListEdit"></div>
+            <div class="settings-add-row">
+              <input id="advisorNewInput" placeholder="追加する担当者名" onkeydown="if(event.key==='Enter')addAdvisor()">
+              <button onclick="addAdvisor()">追加</button>
+            </div>
+          </div>
+        </details>
+      </div>
+      <!-- Facility Type Settings -->
+      <div class="card">
+        <div class="card-title"><span class="icon">🏥</span>施設形態リスト管理</div>
+        <details class="settings-toggle">
+          <summary>⚙ リスト編集</summary>
+          <div class="settings-body">
+            <div class="settings-list" id="facilityListEdit"></div>
+            <div class="settings-add-row">
+              <input id="facilityNewInput" placeholder="追加する施設形態" onkeydown="if(event.key==='Enter')addFacility()">
+              <button onclick="addFacility()">追加</button>
+            </div>
+          </div>
+        </details>
+      </div>
+      <!-- Generate Buttons -->
+      <div class="generate-buttons">
+        <button class="btn btn-flex" onclick="generateFlex()">📨 フレックス<br>メッセージ生成</button>
+        <button class="btn btn-carousel" onclick="generateCarousel()">🎠 カルーセル<br>メッセージ生成</button>
+      </div>
+      <div style="margin-bottom:16px;">
+        <button class="btn btn-detail" onclick="generateDetail()" style="padding:14px 8px;font-size:13px;line-height:1.4;">📄 求人詳細メッセージ生成</button>
+      </div>
+    </div>
+    <!-- RIGHT: Preview -->
+    <div class="preview-area">
+      <div class="card" style="padding:0;overflow:hidden;">
+        <div class="preview-phone">
+          <div class="preview-label" id="previewLabel">LINE プレビュー</div>
+          <div id="preview">
+            <div class="preview-empty">← 求人を入力して<br>生成ボタンを押してください</div>
+          </div>
+        </div>
+      </div>
+      <div class="copy-all-section">
+        <button class="btn-copy-all" id="copyAllBtn" onclick="copyAll()">📋 全求人をまとめてコピー</button>
+      </div>
+      <div style="margin-top:8px;text-align:center;">
+        <span style="font-size:11px;color:var(--text-sub);">求人ごとにコピー or まとめてコピーできます</span>
+      </div>
+    </div>
+  </div>
+</div>
+<div class="toast" id="toast"></div>
+
+<script>
+let mode='manual', entryCount=0, slotCount=0;
+let generatedTexts=[]; // 求人ごとのテキスト配列
+
+function setMode(m) {
+  mode=m;
+  const modes=['manual','paste','api'];
+  document.querySelectorAll('.mode-btn').forEach((btn,i) => {
+    btn.classList.toggle('active', modes[i]===m);
+  });
+  document.getElementById('paste-mode').style.display = m==='paste'?'block':'none';
+  document.getElementById('manual-mode').style.display = (m==='manual'||m==='api')?'block':'none';
+  document.getElementById('api-mode').style.display = m==='api'?'block':'none';
+}
+function esc(s){return s.replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
+function escHtml(s){return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/\n/g,'<br>');}
+function autoResize(el){el.style.height='auto';el.style.height=el.scrollHeight+'px';}
+function showToast(msg){const t=document.getElementById('toast');t.textContent=msg;t.classList.add('show');setTimeout(()=>t.classList.remove('show'),2500);}
+
+// ===== Configurable Lists (saved to localStorage) =====
+const DEFAULT_ADVISORS = ['大東','堀越','水野','伊東','髙橋','飯倉','須野原'];
+const DEFAULT_FACILITIES = ['デイ','デイサービス','訪問看護','訪問介護','病院','ショートステイ','有料老人ホーム','有料','特養','グループホーム','サ高住','老健','クリニック','その他'];
+
+function loadList(key, defaults){
+  try{
+    const saved=localStorage.getItem(key);
+    if(saved) return JSON.parse(saved);
+  }catch(e){}
+  return [...defaults];
+}
+function saveList(key, list){
+  try{ localStorage.setItem(key, JSON.stringify(list)); }catch(e){}
+}
+
+let advisorList = loadList('advisorList', DEFAULT_ADVISORS);
+let facilityList = loadList('facilityList', DEFAULT_FACILITIES);
+
+function renderAdvisorSelect(){
+  const sel=document.getElementById('advisorSelect');
+  const current=sel.value;
+  sel.innerHTML='<option value="">選択...</option>'+advisorList.map(a=>`<option value="${esc(a)}">${esc(a)}</option>`).join('');
+  if(current && advisorList.includes(current)) sel.value=current;
+}
+function renderAdvisorListEdit(){
+  document.getElementById('advisorListEdit').innerHTML=advisorList.map((a,i)=>
+    `<span class="settings-tag">${esc(a)}<button class="settings-tag-del" onclick="removeAdvisor(${i})">✕</button></span>`
+  ).join('');
+}
+function addAdvisor(){
+  const input=document.getElementById('advisorNewInput');
+  const v=input.value.trim();
+  if(!v||advisorList.includes(v)){input.value='';return;}
+  advisorList.push(v);
+  saveList('advisorList',advisorList);
+  renderAdvisorSelect();
+  renderAdvisorListEdit();
+  input.value='';
+  showToast(`担当者「${v}」を追加しました`);
+}
+function removeAdvisor(i){
+  const name=advisorList[i];
+  advisorList.splice(i,1);
+  saveList('advisorList',advisorList);
+  renderAdvisorSelect();
+  renderAdvisorListEdit();
+  showToast(`担当者「${name}」を削除しました`);
+}
+
+function renderFacilityListEdit(){
+  document.getElementById('facilityListEdit').innerHTML=facilityList.map((f,i)=>
+    `<span class="settings-tag">${esc(f)}<button class="settings-tag-del" onclick="removeFacility(${i})">✕</button></span>`
+  ).join('');
+}
+function addFacility(){
+  const input=document.getElementById('facilityNewInput');
+  const v=input.value.trim();
+  if(!v||facilityList.includes(v)){input.value='';return;}
+  facilityList.push(v);
+  saveList('facilityList',facilityList);
+  renderFacilityListEdit();
+  showToast(`施設形態「${v}」を追加しました`);
+}
+function removeFacility(i){
+  const name=facilityList[i];
+  facilityList.splice(i,1);
+  saveList('facilityList',facilityList);
+  renderFacilityListEdit();
+  showToast(`施設形態「${name}」を削除しました`);
+}
+
+// ===== Manual Entry =====
+function addEntry(data={}) {
+  entryCount++;
+  const n=entryCount;
+  const div=document.createElement('div');
+  div.className='job-entry'; div.id=`entry-${n}`;
+  div.innerHTML=`
+    <div class="job-entry-header">
+      <span class="job-entry-num">求人 ${n}</span>
+      <button class="btn-remove" onclick="removeEntry(${n})">✕ 削除</button>
+    </div>
+    <div class="form-grid">
+      <div class="form-group full">
+        <label>🏷 カルーセル用タイトル（40字以内）</label>
+        <input id="ctitle-${n}" value="${esc(data.ctitle||'')}" placeholder="例: 看護師さん向け新着求人🌸" maxlength="50" oninput="updateCharCount('ctitle-${n}','cc-${n}',40)">
+        <div class="char-count" id="cc-${n}">0 / 40字</div>
+      </div>
+      <div class="form-group full">
+        <label>施設名（クライアント名）</label>
+        <input id="name-${n}" value="${esc(data.name||'')}" placeholder="例: ウェルライフ株式会社　ウェルハイム・東京">
+      </div>
+      <div class="form-group">
+        <label>施設形態</label>
+        <select id="type-${n}">
+          <option value="">選択...</option>
+          ${facilityList.map(t=>`<option value="${esc(t)}" ${data.type===t?'selected':''}>${esc(t)}</option>`).join('')}
+        </select>
+      </div>
+      <div class="form-group">
+        <label>施設形態（手入力）</label>
+        <input id="type-custom-${n}" value="${esc(data.typeCustom||'')}" placeholder="リストにない場合">
+      </div>
+      <div class="form-group full">
+        <label>勤務時間</label>
+        <textarea id="time-${n}" class="field-textarea" oninput="autoResize(this)" placeholder="例: 8:45～17:45（休憩60分）">${esc(data.time||'')}</textarea>
+      </div>
+      <div class="form-group full">
+        <label>給与</label>
+        <textarea id="pay-${n}" class="field-textarea" oninput="autoResize(this)" placeholder="例: 時給1,950円〜">${esc(data.pay||'')}</textarea>
+      </div>
+      <div class="form-group full">
+        <label>資格（カルーセル用 📜）</label>
+        <input id="cert-${n}" value="${esc(data.cert||'')}" placeholder="例: 正看護師, 准看護師">
+      </div>
+      <div class="form-group full">
+        <label>勤務回数（週最低勤務日数）※求人詳細用</label>
+        <input id="mindays-${n}" value="${esc(data.minDays||'')}" placeholder="例: 週3日〜">
+      </div>
+      <div class="form-group full">
+        <label>勤務開始可能日 ※求人詳細用</label>
+        <input id="startdate-${n}" value="${esc(data.startDate||'')}" placeholder="例: 即日">
+      </div>
+    </div>
+  `;
+  document.getElementById('job-entries').appendChild(div);
+  updateCharCount(`ctitle-${n}`,`cc-${n}`,40);
+}
+function removeEntry(n){document.getElementById(`entry-${n}`)?.remove();renumberEntries();}
+function renumberEntries(){
+  document.querySelectorAll('.job-entry').forEach((el,i)=>{
+    el.querySelector('.job-entry-num').textContent=`求人 ${i+1}`;
+  });
+}
+function updateCharCount(inputId,countId,max){
+  const len=document.getElementById(inputId).value.length;
+  const el=document.getElementById(countId);
+  el.textContent=`${len} / ${max}字`;
+  el.classList.toggle('over',len>max);
+}
+
+function getEntries(){
+  const result=[];
+  document.querySelectorAll('.job-entry').forEach((el,i)=>{
+    const id=el.id.split('-')[1];
+    const ctitle=document.getElementById(`ctitle-${id}`).value.trim();
+    const name=document.getElementById(`name-${id}`).value.trim();
+    const typeSelect=document.getElementById(`type-${id}`).value;
+    const typeCustom=document.getElementById(`type-custom-${id}`).value.trim();
+    const type=typeCustom||typeSelect;
+    const time=document.getElementById(`time-${id}`).value.trim();
+    const pay=document.getElementById(`pay-${id}`).value.trim();
+    const cert=document.getElementById(`cert-${id}`).value.trim();
+    const minDays=document.getElementById(`mindays-${id}`).value.trim();
+    const startDate=document.getElementById(`startdate-${id}`).value.trim();
+    if(name||time||pay) result.push({num:i+1,ctitle,name,type,time,pay,cert,minDays,startDate});
+  });
+  return result;
+}
+
+// ===== Advisor =====
+function getAdvisor(){
+  const custom=document.getElementById('advisorCustom').value.trim();
+  if(custom) return custom;
+  return document.getElementById('advisorSelect').value;
+}
+function syncAdvisor(){
+  // just for UX — if custom is filled, clear select (and vice versa)
+}
+
+// ===== Format single entry =====
+function formatFlex(e){
+  const lines=[];
+  let title=e.name;
+  if(e.type) title+=`【${e.type}】`;
+  lines.push(title);
+  if(e.time){
+    const tl=e.time.split('\n').map(l=>l.trim()).filter(Boolean);
+    tl.forEach((l,i)=>lines.push(i===0?`🕐${l}`:`　${l}`));
+  }
+  if(e.pay){
+    const pl=e.pay.split('\n').map(l=>l.trim()).filter(Boolean);
+    pl.forEach((l,i)=>lines.push(i===0?`👛${l}`:`　${l}`));
+  }
+  return lines.join('\n');
+}
+function formatCarousel(e){
+  const lines=[];
+  if(e.ctitle) lines.push(e.ctitle);
+  let title=e.name;
+  if(e.type) title+=`【${e.type}】`;
+  lines.push(title);
+  if(e.time){
+    const tl=e.time.split('\n').map(l=>l.trim()).filter(Boolean);
+    tl.forEach((l,i)=>lines.push(i===0?`🕐${l}`:`　${l}`));
+  }
+  if(e.pay){
+    const pl=e.pay.split('\n').map(l=>l.trim()).filter(Boolean);
+    pl.forEach((l,i)=>lines.push(i===0?`👛${l}`:`　${l}`));
+  }
+  if(e.cert) lines.push(`📜${e.cert}`);
+  return lines.join('\n');
+}
+
+function formatDetail(e, advisor){
+  const P = '【手動で入力してください】';
+  const lines=[];
+
+  // 挨拶
+  lines.push('こんにちは！');
+  lines.push(`タスタスキャリアアドバイザーの${advisor||P}です。`);
+
+  // 施設名
+  const facilityName = e.name || P;
+  lines.push(`「${facilityName}」の詳細をお送りします。`);
+
+  lines.push(`・施設名：${facilityName}`);
+  lines.push(`・住所：${P}`);
+  lines.push(`・アクセス：${P}`);
+  lines.push(`・業務内容`);
+  lines.push(P);
+
+  // 勤務時間（スプシにある）
+  if(e.time){
+    const tl=e.time.split('\n').map(l=>l.trim()).filter(Boolean);
+    lines.push(`・時間：${tl[0]}`);
+    tl.slice(1).forEach(l=>lines.push(`　${l}`));
+  }else{
+    lines.push(`・時間：${P}`);
+  }
+
+  lines.push(`・勤務回数：${e.minDays||P}`);
+  lines.push(`・勤務開始日：${e.startDate||P}`);
+  lines.push(`・勤務期間：${P}`);
+  lines.push(`・応募条件：${e.cert||P}`);
+
+  // 給与（スプシにある）
+  if(e.pay){
+    const pl=e.pay.split('\n').map(l=>l.trim()).filter(Boolean);
+    lines.push(`・時給：${pl[0]}`);
+    pl.slice(1).forEach(l=>lines.push(`　${l}`));
+  }else{
+    lines.push(`・時給：${P}`);
+  }
+
+  lines.push('');
+  lines.push('以上になります。');
+  lines.push('他に知りたい情報ある場合やお仕事に関して相談したい場合は、お気軽にLINEのメッセージからご連絡ください！');
+
+  return lines.join('\n');
+}
+
+// ===== Generate =====
+function generateFlex(){
+  const entries=getEntries();
+  if(!entries.length){showToast('求人情報を入力してください');return;}
+  generatedTexts=entries.map(e=>formatFlex(e));
+  showPreview('flex',generatedTexts);
+  showToast('フレックスメッセージを生成しました');
+}
+function generateCarousel(){
+  const entries=getEntries();
+  if(!entries.length){showToast('求人情報を入力してください');return;}
+  generatedTexts=entries.map(e=>formatCarousel(e));
+  showPreview('carousel',generatedTexts);
+  showToast('カルーセルメッセージを生成しました');
+}
+function generateDetail(){
+  const entries=getEntries();
+  if(!entries.length){showToast('求人情報を入力してください');return;}
+  const advisor=getAdvisor();
+  generatedTexts=entries.map(e=>formatDetail(e,advisor));
+  showPreview('detail',generatedTexts);
+  showToast('求人詳細メッセージを生成しました');
+}
+
+let generatedNames=[]; // 施設名（ファイル名用）
+
+function showPreview(type,texts){
+  const label=document.getElementById('previewLabel');
+  const badges = {
+    flex: '<span class="preview-type-badge badge-flex">フレックス</span>',
+    carousel: '<span class="preview-type-badge badge-carousel">カルーセル</span>',
+    detail: '<span class="preview-type-badge badge-detail">求人詳細</span>',
+  };
+  label.innerHTML = `LINE プレビュー ${badges[type]||''}`;
+
+  // 施設名を保存（ダウンロード用）
+  const entries=getEntries();
+  generatedNames=entries.map(e=>e.name||`求人${e.num}`);
+
+  let html='';
+  texts.forEach((text,i)=>{
+    html+=`
+      <div class="preview-card">
+        <div class="preview-card-header">
+          <span class="preview-card-num">求人 ${i+1}</span>
+          <span class="preview-card-actions">
+            <button class="btn-copy-sm" id="copyBtn-${i}" onclick="copySingle(${i})">コピー</button>
+            <button class="btn-dl-sm" id="dlBtn-${i}" onclick="downloadSingle(${i})">💾 .txt</button>
+          </span>
+        </div>
+        <div class="preview-card-body">${escHtml(text)}</div>
+      </div>
+    `;
+  });
+  document.getElementById('preview').innerHTML=html;
+}
+
+// ===== Copy =====
+async function copyText(text,btnEl){
+  try{
+    await navigator.clipboard.writeText(text);
+  }catch(e){
+    const ta=document.createElement('textarea');
+    ta.value=text;document.body.appendChild(ta);ta.select();
+    document.execCommand('copy');document.body.removeChild(ta);
+  }
+  if(btnEl){
+    const orig=btnEl.textContent;
+    btnEl.textContent='✅ 完了';btnEl.classList.add('copied');
+    setTimeout(()=>{btnEl.textContent=orig;btnEl.classList.remove('copied');},1500);
+  }
+}
+function copySingle(i){
+  if(!generatedTexts[i]) return;
+  const btn=document.getElementById(`copyBtn-${i}`);
+  copyText(generatedTexts[i],btn);
+  showToast(`求人 ${i+1} をコピーしました`);
+}
+function downloadSingle(i){
+  if(!generatedTexts[i]) return;
+  const name=generatedNames[i]||`求人${i+1}`;
+  // ファイル名に使えない文字を除去
+  const safeName=name.replace(/[\\/:*?"<>|]/g,'_');
+  const blob=new Blob([generatedTexts[i]],{type:'text/plain;charset=utf-8'});
+  const url=URL.createObjectURL(blob);
+  const a=document.createElement('a');
+  a.href=url; a.download=`${safeName}.txt`;
+  document.body.appendChild(a); a.click(); document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+  const btn=document.getElementById(`dlBtn-${i}`);
+  if(btn){const orig=btn.textContent;btn.textContent='✅ 保存済';btn.classList.add('done');setTimeout(()=>{btn.textContent=orig;btn.classList.remove('done');},1500);}
+  showToast(`${safeName}.txt をダウンロードしました`);
+}
+function copyAll(){
+  if(!generatedTexts.length){showToast('まず生成ボタンを押してください');return;}
+  const all=generatedTexts.join('\n\n');
+  const btn=document.getElementById('copyAllBtn');
+  copyText(all,btn);
+  showToast('全求人をコピーしました！');
+}
+
+// ===== Paste Slots =====
+function addPasteSlot(){
+  slotCount++;
+  const n=slotCount;
+  const div=document.createElement('div');
+  div.className='paste-slot';div.id=`paste-slot-${n}`;
+  div.innerHTML=`
+    <div class="paste-slot-header">
+      <span class="paste-slot-num">求人 ${document.querySelectorAll('.paste-slot').length+1}</span>
+      <button class="btn-remove" onclick="removePasteSlot(${n})">✕</button>
+    </div>
+    <textarea class="paste-slot-area" id="paste-area-${n}" placeholder="スプシの1行をここに貼り付け"></textarea>
+  `;
+  document.getElementById('paste-slots').appendChild(div);
+  renumberSlots();
+}
+function removePasteSlot(n){document.getElementById(`paste-slot-${n}`)?.remove();renumberSlots();}
+function renumberSlots(){
+  document.querySelectorAll('.paste-slot').forEach((el,i)=>{
+    el.querySelector('.paste-slot-num').textContent=`求人 ${i+1}`;
+  });
+}
+function clearAllSlots(){document.getElementById('paste-slots').innerHTML='';slotCount=0;addPasteSlot();}
+
+function parseSpreadsheetRow(text){
+  const cols=[];let current='',inQuote=false,i=0;
+  while(i<text.length){
+    const ch=text[i];
+    if(inQuote){
+      if(ch==='"'){if(i+1<text.length&&text[i+1]==='"'){current+='"';i+=2;}else{inQuote=false;i++;}}
+      else{current+=ch;i++;}
+    }else{
+      if(ch==='"'&&current===''){inQuote=true;i++;}
+      else if(ch==='\t'){cols.push(current);current='';i++;}
+      else{current+=ch;i++;}
+    }
+  }
+  cols.push(current);
+  return cols;
+}
+function parseOneSlot(text){
+  if(!text||!text.trim()) return null;
+  const COL={name:3,facility:7,cert:18,time:19,minDays:20,pay:25,startDate:27};
+  const tabCount=(text.match(/\t/g)||[]).length;
+  if(tabCount>=10){
+    const cols=parseSpreadsheetRow(text);
+    if(cols.length>10){
+      return{
+        name:(cols[COL.name]||'').trim(),
+        typeCustom:(cols[COL.facility]||'').trim(),
+        cert:(cols[COL.cert]||'').replace(/\r/g,'').trim(),
+        time:(cols[COL.time]||'').replace(/\r/g,'').trim(),
+        minDays:(cols[COL.minDays]||'').replace(/\r/g,'').trim(),
+        pay:(cols[COL.pay]||'').replace(/\r/g,'').trim(),
+        startDate:(cols[COL.startDate]||'').replace(/\r/g,'').trim(),
+      };
+    }
+  }
+  const cols=text.split('\t');
+  if(cols.length>=4) return{name:(cols[0]||'').trim(),typeCustom:(cols[1]||'').trim(),time:(cols[2]||'').trim(),pay:(cols[3]||'').trim()};
+  return{name:text.split('\t')[0].split('\n')[0].trim()};
+}
+function parseAllSlots(){
+  document.getElementById('job-entries').innerHTML='';entryCount=0;
+  let parsed=0;
+  document.querySelectorAll('.paste-slot-area').forEach(slot=>{
+    const data=parseOneSlot(slot.value);
+    if(data&&data.name){addEntry(data);parsed++;}
+  });
+  if(parsed>0){
+    showToast(`${parsed}件の求人を取り込みました`);
+    setMode('manual');
+    setTimeout(()=>document.querySelectorAll('.field-textarea').forEach(el=>autoResize(el)),50);
+  }else{showToast('データを取り込めませんでした');}
+}
+
+// ===== GAS API (JSONP) =====
+function saveGasUrl(){
+  const url=document.getElementById('gasUrl').value.trim();
+  try{ localStorage.setItem('gasApiUrl', url); }catch(e){}
+}
+function loadGasUrl(){
+  try{
+    const url=localStorage.getItem('gasApiUrl');
+    if(url) document.getElementById('gasUrl').value=url;
+  }catch(e){}
+}
+function getGasUrl(){
+  return document.getElementById('gasUrl').value.trim();
+}
+
+// JSONP: <script>タグでGASを呼び出し、CORSを回避
+let jsonpCounter=0;
+function gasFetch(params){
+  return new Promise((resolve,reject)=>{
+    const base=getGasUrl();
+    if(!base){showToast('GAS URLを設定してください');reject(new Error('No URL'));return;}
+
+    const cbName='__gasCallback_'+(jsonpCounter++);
+    params.callback=cbName;
+    const qs=new URLSearchParams(params).toString();
+    const url=base+'?'+qs;
+
+    // コールバック関数をグローバルに登録
+    window[cbName]=function(data){
+      delete window[cbName];
+      script.remove();
+      resolve(data);
+    };
+
+    const script=document.createElement('script');
+    script.src=url;
+    script.onerror=function(){
+      delete window[cbName];
+      script.remove();
+      reject(new Error('GAS API への接続に失敗しました'));
+    };
+    // タイムアウト（15秒）
+    setTimeout(()=>{
+      if(window[cbName]){
+        delete window[cbName];
+        script.remove();
+        reject(new Error('タイムアウト: GAS APIの応答がありません'));
+      }
+    },15000);
+
+    document.body.appendChild(script);
+  });
+}
+
+function apiDataToEntry(d){
+  return {
+    name: d.name||'',
+    typeCustom: d.facility||'',
+    cert: d.cert||'',
+    time: d.time||'',
+    minDays: d.minDays||'',
+    startDate: d.startDate||'',
+    pay: d.pay||'',
+  };
+}
+
+async function fetchRows(){
+  const input=document.getElementById('rowInput').value.trim();
+  if(!input){showToast('行番号を入力してください');return;}
+  const btn=document.getElementById('fetchBtn');
+  btn.textContent='取得中...'; btn.disabled=true;
+
+  try{
+    const rowNums=input.split(',').map(r=>r.trim()).filter(Boolean);
+
+    if(rowNums.length===1){
+      const data=await gasFetch({row:rowNums[0]});
+      if(data.error){showToast(data.error);btn.textContent='取得';btn.disabled=false;return;}
+      document.getElementById('job-entries').innerHTML='';entryCount=0;
+      addEntry(apiDataToEntry(data));
+    }else{
+      const data=await gasFetch({rows:rowNums.join(',')});
+      if(data.error){showToast(data.error);btn.textContent='取得';btn.disabled=false;return;}
+      document.getElementById('job-entries').innerHTML='';entryCount=0;
+      (data.rows||[]).forEach(d=>{
+        if(d.error){showToast(`行${d.row}: ${d.error}`);return;}
+        if(d.name) addEntry(apiDataToEntry(d));
+      });
+    }
+
+    showToast('スプシからデータを取得しました');
+    setTimeout(()=>document.querySelectorAll('.field-textarea').forEach(el=>autoResize(el)),50);
+  }catch(e){
+    showToast('取得エラー: '+e.message);
+  }
+  btn.textContent='取得'; btn.disabled=false;
+}
+
+async function fetchList(){
+  const btn=document.getElementById('listBtn');
+  btn.textContent='読み込み中...'; btn.disabled=true;
+  const area=document.getElementById('api-list-area');
+  const list=document.getElementById('api-list');
+
+  try{
+    const data=await gasFetch({list:'true'});
+    if(data.error){showToast(data.error);btn.textContent='📋 クライアント一覧を表示';btn.disabled=false;return;}
+
+    area.style.display='block';
+    if(!data.list||!data.list.length){
+      list.innerHTML='<div class="loading-spinner">データがありません</div>';
+    }else{
+      list.innerHTML=data.list.map(item=>`
+        <div class="api-list-item" onclick="document.getElementById('rowInput').value='${item.row}';fetchRows();">
+          <span class="api-list-row">${item.row}</span>
+          <span class="api-list-name">${esc(item.label)}</span>
+          <button class="api-list-use" onclick="event.stopPropagation();document.getElementById('rowInput').value='${item.row}';fetchRows();">取得</button>
+        </div>
+      `).join('');
+    }
+  }catch(e){
+    showToast('一覧取得エラー: '+e.message);
+  }
+  btn.textContent='📋 クライアント一覧を表示'; btn.disabled=false;
+}
+
+// Init
+addEntry();
+addPasteSlot();
+loadGasUrl();
+renderAdvisorSelect();
+renderAdvisorListEdit();
+renderFacilityListEdit();
+</script>
+</body>
+</html>
