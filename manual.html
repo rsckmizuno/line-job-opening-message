@@ -1,0 +1,533 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>求人LINE配信テキスト生成ツール - 操作マニュアル</title>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@300;400;500;700;900&family=M+PLUS+Rounded+1c:wght@400;700;800&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg:#f5f3ef; --card:#ffffff; --border:#e2ddd5;
+    --text:#2c2820; --text-sub:#7a7368;
+    --green:#06c755; --green-light:#e8faf0;
+    --blue:#4a90d9; --blue-light:#e8f0fb;
+    --coral:#e8837c; --coral-light:#fde8e6;
+    --detail-green:#3a8a3a; --detail-green-light:#e8f5e8;
+    --brown:#8b6f4e; --brown-light:#f7f2ec;
+    --shadow:0 2px 16px rgba(44,40,32,0.07);
+    --radius:16px;
+  }
+  *{margin:0;padding:0;box-sizing:border-box;}
+  body{font-family:'Noto Sans JP',sans-serif;background:var(--bg);color:var(--text);line-height:1.8;}
+
+  /* HERO */
+  .hero{background:linear-gradient(135deg,var(--green) 0%,#04a74b 100%);color:#fff;padding:60px 24px 50px;text-align:center;position:relative;overflow:hidden;}
+  .hero::after{content:'';position:absolute;top:-30%;right:-5%;width:400px;height:400px;background:rgba(255,255,255,0.06);border-radius:50%;}
+  .hero::before{content:'';position:absolute;bottom:-20%;left:-8%;width:300px;height:300px;background:rgba(255,255,255,0.04);border-radius:50%;}
+  .hero h1{font-family:'M PLUS Rounded 1c',sans-serif;font-size:28px;font-weight:800;position:relative;z-index:1;}
+  .hero p{font-size:15px;opacity:0.9;margin-top:8px;position:relative;z-index:1;}
+  .hero-badge{display:inline-block;background:rgba(255,255,255,0.2);padding:4px 16px;border-radius:20px;font-size:12px;font-weight:700;margin-top:16px;position:relative;z-index:1;}
+
+  /* CONTAINER */
+  .container{max-width:800px;margin:0 auto;padding:32px 20px 80px;}
+
+  /* TOC */
+  .toc{background:var(--card);border:1px solid var(--border);border-radius:var(--radius);padding:24px 28px;box-shadow:var(--shadow);margin-bottom:40px;}
+  .toc h2{font-size:16px;font-weight:700;color:var(--brown);margin-bottom:14px;display:flex;align-items:center;gap:8px;}
+  .toc-list{list-style:none;counter-reset:toc;}
+  .toc-list li{counter-increment:toc;}
+  .toc-list li a{display:flex;align-items:center;gap:10px;padding:8px 12px;border-radius:8px;text-decoration:none;color:var(--text);font-size:14px;font-weight:500;transition:background 0.15s;}
+  .toc-list li a:hover{background:var(--green-light);}
+  .toc-list li a::before{content:counter(toc);display:flex;align-items:center;justify-content:center;width:28px;height:28px;background:var(--green);color:#fff;border-radius:50%;font-family:'M PLUS Rounded 1c',sans-serif;font-weight:700;font-size:13px;flex-shrink:0;}
+
+  /* SECTION */
+  .section{margin-bottom:48px;}
+  .section-header{display:flex;align-items:center;gap:12px;margin-bottom:20px;}
+  .section-num{display:flex;align-items:center;justify-content:center;width:40px;height:40px;background:var(--green);color:#fff;border-radius:50%;font-family:'M PLUS Rounded 1c',sans-serif;font-weight:800;font-size:18px;flex-shrink:0;}
+  .section-title{font-size:20px;font-weight:700;}
+
+  .card{background:var(--card);border:1px solid var(--border);border-radius:var(--radius);padding:24px;box-shadow:var(--shadow);margin-bottom:16px;}
+  .card h3{font-size:15px;font-weight:700;color:var(--brown);margin-bottom:12px;display:flex;align-items:center;gap:6px;}
+
+  /* STEP CARDS */
+  .steps{display:flex;flex-direction:column;gap:12px;}
+  .step{display:flex;gap:14px;padding:16px;background:var(--card);border:1px solid var(--border);border-radius:12px;box-shadow:var(--shadow);}
+  .step-num{display:flex;align-items:center;justify-content:center;width:32px;height:32px;background:var(--green-light);color:var(--green);border-radius:50%;font-family:'M PLUS Rounded 1c',sans-serif;font-weight:800;font-size:15px;flex-shrink:0;}
+  .step-body{flex:1;}
+  .step-body strong{font-size:14px;display:block;margin-bottom:2px;}
+  .step-body p{font-size:13px;color:var(--text-sub);line-height:1.6;}
+
+  /* UI MOCK */
+  .ui-mock{background:#fafaf8;border:2px solid var(--border);border-radius:12px;padding:16px;margin:16px 0;font-size:13px;position:relative;overflow:hidden;}
+  .ui-mock-label{position:absolute;top:0;right:0;background:var(--brown);color:#fff;font-size:10px;font-weight:700;padding:3px 12px;border-radius:0 10px 0 8px;}
+  .ui-mock-tabs{display:flex;gap:0;margin-bottom:14px;background:#fff;border:1px solid var(--border);border-radius:8px;overflow:hidden;}
+  .ui-mock-tab{flex:1;text-align:center;padding:8px;font-size:12px;font-weight:500;color:var(--text-sub);}
+  .ui-mock-tab.active{background:var(--green);color:#fff;}
+  .ui-mock-field{background:#fff;border:1px solid var(--border);border-radius:6px;padding:8px 10px;margin-bottom:8px;color:#bbb;font-size:12px;}
+  .ui-mock-field.filled{color:var(--text);}
+  .ui-mock-btn{display:inline-block;padding:8px 16px;border-radius:8px;color:#fff;font-size:12px;font-weight:700;margin:4px 4px 4px 0;}
+  .ui-mock-btn.flex{background:var(--blue);}
+  .ui-mock-btn.carousel{background:var(--coral);}
+  .ui-mock-btn.detail{background:var(--detail-green);}
+  .ui-mock-btn.green{background:var(--green);}
+  .ui-mock-preview{background:#f7f7f5;border-radius:0 12px 12px 12px;padding:12px;font-size:12px;line-height:1.7;margin-top:10px;white-space:pre-wrap;}
+
+  /* TIP BOX */
+  .tip{background:var(--green-light);border-radius:10px;padding:14px 16px;font-size:13px;color:#2a7a45;margin:12px 0;line-height:1.6;display:flex;gap:8px;}
+  .tip-icon{font-size:16px;flex-shrink:0;margin-top:1px;}
+  .warn{background:#fff8e6;color:#8a6d00;border-radius:10px;padding:14px 16px;font-size:13px;margin:12px 0;line-height:1.6;display:flex;gap:8px;}
+
+  /* BADGE */
+  .badge{display:inline-block;padding:2px 10px;border-radius:10px;font-size:11px;font-weight:700;}
+  .badge-flex{background:var(--blue-light);color:var(--blue);}
+  .badge-carousel{background:var(--coral-light);color:var(--coral);}
+  .badge-detail{background:var(--detail-green-light);color:var(--detail-green);}
+  .badge-beta{background:#f0e8ff;color:#7c5cbf;}
+
+  /* FLOW DIAGRAM */
+  .flow{display:flex;flex-direction:column;align-items:center;gap:0;margin:20px 0;}
+  .flow-box{background:var(--card);border:2px solid var(--green);border-radius:10px;padding:10px 24px;font-size:14px;font-weight:700;text-align:center;min-width:200px;}
+  .flow-arrow{font-size:20px;color:var(--green);line-height:1;}
+  .flow-branch{display:flex;gap:16px;justify-content:center;width:100%;}
+  .flow-box.blue{border-color:var(--blue);color:var(--blue);}
+  .flow-box.coral{border-color:var(--coral);color:var(--coral);}
+  .flow-box.green-dark{border-color:var(--detail-green);color:var(--detail-green);}
+
+  /* COMPARISON TABLE */
+  .compare-table{width:100%;border-collapse:collapse;font-size:13px;margin:12px 0;}
+  .compare-table th{background:var(--brown-light);padding:10px 14px;text-align:left;font-weight:700;font-size:12px;color:var(--brown);border-bottom:2px solid var(--border);}
+  .compare-table td{padding:10px 14px;border-bottom:1px solid var(--border);}
+  .compare-table tr:last-child td{border-bottom:none;}
+
+  /* CODE BLOCK */
+  .output-example{background:#1e1e1e;color:#d4d4d4;border-radius:10px;padding:16px;font-size:12px;line-height:1.8;white-space:pre-wrap;font-family:'M PLUS Rounded 1c',monospace;margin:12px 0;overflow-x:auto;}
+  .output-example .hl{color:#06c755;font-weight:700;}
+  .output-example .placeholder{color:#e8837c;}
+
+  @media(max-width:600px){
+    .hero h1{font-size:22px;}
+    .flow-branch{flex-direction:column;align-items:center;}
+  }
+</style>
+</head>
+<body>
+
+<!-- HERO -->
+<div class="hero">
+  <h1>📋 求人LINE配信テキスト生成ツール</h1>
+  <p>操作マニュアル</p>
+  <div class="hero-badge">初めての方向けガイド v1.0</div>
+</div>
+
+<div class="container">
+
+<!-- TOC -->
+<nav class="toc">
+  <h2>📑 目次</h2>
+  <ol class="toc-list">
+    <li><a href="#overview">ツールの全体像</a></li>
+    <li><a href="#mode-manual">手入力モードの使い方</a></li>
+    <li><a href="#mode-paste">スプシ貼り付けモードの使い方</a></li>
+    <li><a href="#mode-api">スプシ連携モードの使い方</a></li>
+    <li><a href="#generate">テキスト生成（3種類）</a></li>
+    <li><a href="#copy-dl">コピー＆ダウンロード</a></li>
+    <li><a href="#settings">リスト編集（担当者・施設形態）</a></li>
+    <li><a href="#gas-setup">GAS API 初期設定（スプシ連携用）</a></li>
+  </ol>
+</nav>
+
+<!-- ===== 1. OVERVIEW ===== -->
+<div class="section" id="overview">
+  <div class="section-header">
+    <span class="section-num">1</span>
+    <span class="section-title">ツールの全体像</span>
+  </div>
+
+  <div class="card">
+    <h3>🎯 このツールでできること</h3>
+    <p>タスワークBOシート（スプレッドシート）の求人情報から、LINE公式アカウントで配信するメッセージテキストをワンクリックで生成できます。</p>
+
+    <div class="flow">
+      <div class="flow-box">スプシの求人情報</div>
+      <div class="flow-arrow">↓</div>
+      <div class="flow-box" style="background:var(--green-light);">このツールで整形</div>
+      <div class="flow-arrow">↓</div>
+      <div class="flow-branch">
+        <div class="flow-box blue">フレックス<br>メッセージ</div>
+        <div class="flow-box coral">カルーセル<br>メッセージ</div>
+        <div class="flow-box green-dark">求人詳細<br>メッセージ</div>
+      </div>
+      <div class="flow-arrow">↓</div>
+      <div class="flow-box">LINE公式で配信</div>
+    </div>
+  </div>
+
+  <div class="card">
+    <h3>🔄 3つの入力モード</h3>
+    <div class="ui-mock">
+      <span class="ui-mock-label">画面イメージ</span>
+      <div class="ui-mock-tabs">
+        <div class="ui-mock-tab active">✏️ 手入力</div>
+        <div class="ui-mock-tab">📋 貼り付け</div>
+        <div class="ui-mock-tab">🔗 スプシ連携 <span class="badge badge-beta" style="font-size:9px;">ベータ版</span></div>
+      </div>
+    </div>
+    <table class="compare-table">
+      <tr><th>モード</th><th>特徴</th><th>おすすめの場面</th></tr>
+      <tr><td><strong>✏️ 手入力</strong></td><td>フォームに直接入力</td><td>少数の求人 / 細かく調整したい時</td></tr>
+      <tr><td><strong>📋 貼り付け</strong></td><td>スプシの行をコピペ</td><td>スプシから素早く取り込みたい時</td></tr>
+      <tr><td><strong>🔗 スプシ連携</strong></td><td>行番号だけでデータ取得</td><td>GAS設定済みで効率よく使いたい時</td></tr>
+    </table>
+  </div>
+</div>
+
+<!-- ===== 2. MANUAL ===== -->
+<div class="section" id="mode-manual">
+  <div class="section-header">
+    <span class="section-num">2</span>
+    <span class="section-title">手入力モードの使い方</span>
+  </div>
+
+  <div class="steps">
+    <div class="step">
+      <div class="step-num">1</div>
+      <div class="step-body">
+        <strong>「✏️ 手入力」タブを選択</strong>
+        <p>画面上部のタブで手入力モードを選びます（初期状態で選択済み）。</p>
+      </div>
+    </div>
+    <div class="step">
+      <div class="step-num">2</div>
+      <div class="step-body">
+        <strong>求人情報を入力</strong>
+        <p>施設名・施設形態・勤務時間・給与・資格などを入力します。複数求人がある場合は「＋ 求人を追加」をクリック。</p>
+      </div>
+    </div>
+    <div class="step">
+      <div class="step-num">3</div>
+      <div class="step-body">
+        <strong>生成ボタンを押す</strong>
+        <p>画面下部の3つのボタンからメッセージの種類を選んでクリックします。</p>
+      </div>
+    </div>
+  </div>
+
+  <div class="card" style="margin-top:16px;">
+    <h3>📝 入力フォームの各項目</h3>
+    <div class="ui-mock">
+      <span class="ui-mock-label">入力フォーム</span>
+      <div class="ui-mock-field filled">🏷 カルーセル用タイトル（40字以内）<br>→ カルーセル生成時のみ使用</div>
+      <div class="ui-mock-field filled">施設名（クライアント名）<br>→ 全メッセージで使用</div>
+      <div class="ui-mock-field filled">施設形態（プルダウン or 手入力）<br>→ 施設名の後ろに【有料】等で表示</div>
+      <div class="ui-mock-field filled">勤務時間 ※複数シフトは改行で入力<br>→ 🕐 アイコン付きで表示</div>
+      <div class="ui-mock-field filled">給与 ※複数条件は改行で入力<br>→ 👛 アイコン付きで表示</div>
+      <div class="ui-mock-field filled">資格<br>→ カルーセル・求人詳細で 📜 付きで表示</div>
+      <div class="ui-mock-field filled">勤務回数（週最低勤務日数）<br>→ 求人詳細メッセージで使用</div>
+      <div class="ui-mock-field filled">勤務開始可能日<br>→ 求人詳細メッセージで使用</div>
+    </div>
+    <div class="tip">
+      <span class="tip-icon">💡</span>
+      <span>勤務時間や給与に複数の条件がある場合は<strong>改行して入力</strong>してください。2行目以降はアイコンなしで字下げ表示されます。</span>
+    </div>
+  </div>
+</div>
+
+<!-- ===== 3. PASTE ===== -->
+<div class="section" id="mode-paste">
+  <div class="section-header">
+    <span class="section-num">3</span>
+    <span class="section-title">スプシ貼り付けモードの使い方</span>
+  </div>
+
+  <div class="steps">
+    <div class="step">
+      <div class="step-num">1</div>
+      <div class="step-body">
+        <strong>「📋 貼り付け」タブを選択</strong>
+        <p>画面上部のタブで貼り付けモードに切り替えます。</p>
+      </div>
+    </div>
+    <div class="step">
+      <div class="step-num">2</div>
+      <div class="step-body">
+        <strong>スプシの行をコピー</strong>
+        <p>タスワークBOシートで送りたい求人の行をまるごと選択してコピー（Ctrl+C）します。</p>
+      </div>
+    </div>
+    <div class="step">
+      <div class="step-num">3</div>
+      <div class="step-body">
+        <strong>貼り付け欄にペースト</strong>
+        <p>1つの欄に1行ずつ貼り付けます。複数求人の場合は「＋ 貼り付け欄を追加」で欄を増やしてください。</p>
+      </div>
+    </div>
+    <div class="step">
+      <div class="step-num">4</div>
+      <div class="step-body">
+        <strong>「🔄 解析して取り込み」をクリック</strong>
+        <p>施設名・施設形態・勤務時間・給与・資格が自動で各フィールドに振り分けられます。足りない情報は手動で追加してください。</p>
+      </div>
+    </div>
+  </div>
+
+  <div class="warn">
+    <span class="tip-icon">⚠️</span>
+    <span><strong>1つの欄に1行（1求人）</strong>ずつ貼り付けてください。複数行をまとめて1欄に貼り付けると正しく読み取れない場合があります。</span>
+  </div>
+</div>
+
+<!-- ===== 4. API ===== -->
+<div class="section" id="mode-api">
+  <div class="section-header">
+    <span class="section-num">4</span>
+    <span class="section-title">スプシ連携モードの使い方 <span class="badge badge-beta">ベータ版</span></span>
+  </div>
+
+  <div class="card">
+    <p>スプレッドシートの行番号を入力するだけで、求人データを自動取得できるモードです。<br>
+    初回のみGAS APIの設定が必要です（→ <a href="#gas-setup" style="color:var(--green);">セクション8</a>を参照）。</p>
+  </div>
+
+  <div class="steps">
+    <div class="step">
+      <div class="step-num">1</div>
+      <div class="step-body">
+        <strong>「🔗 スプシ連携（ベータ版）」タブを選択</strong>
+        <p>初回のみGAS URLの入力が必要です。一度入力すれば次回以降は保存されています。</p>
+      </div>
+    </div>
+    <div class="step">
+      <div class="step-num">2</div>
+      <div class="step-body">
+        <strong>行番号を入力して「取得」</strong>
+        <p>スプシの行番号を入力してボタンを押します。カンマ区切りで複数行もOK（例：<code style="background:#eee;padding:1px 6px;border-radius:4px;">3,5,8</code>）。</p>
+      </div>
+    </div>
+    <div class="step">
+      <div class="step-num">3</div>
+      <div class="step-body">
+        <strong>データが自動で反映</strong>
+        <p>取得したデータが手入力モードのフォームに自動で入ります。内容を確認・修正してから生成ボタンを押してください。</p>
+      </div>
+    </div>
+  </div>
+
+  <div class="tip">
+    <span class="tip-icon">💡</span>
+    <span>「📋 クライアント一覧を表示」ボタンで、スプシ内の全クライアント名を一覧表示できます。クリックするとその行のデータを取得します。</span>
+  </div>
+</div>
+
+<!-- ===== 5. GENERATE ===== -->
+<div class="section" id="generate">
+  <div class="section-header">
+    <span class="section-num">5</span>
+    <span class="section-title">テキスト生成（3種類）</span>
+  </div>
+
+  <div class="card">
+    <h3><span class="badge badge-flex">フレックス</span> 📨 フレックスメッセージ</h3>
+    <p>求人の概要をコンパクトに伝えるメッセージです。一覧配信に最適。</p>
+    <div class="output-example"><span class="hl">ウェルライフ株式会社　ウェルハイム・東京【有料】</span>
+🕐8:45～17:45（休憩60分）
+👛時給1,950円〜</div>
+    <p style="font-size:12px;color:var(--text-sub);">使用する項目：施設名・施設形態・勤務時間・給与</p>
+  </div>
+
+  <div class="card">
+    <h3><span class="badge badge-carousel">カルーセル</span> 🎠 カルーセルメッセージ</h3>
+    <p>タイトル付きで資格情報も含むメッセージです。スワイプ型の配信に使用。</p>
+    <div class="output-example"><span class="hl">看護師さん向け新着求人🌸</span>
+ウェルライフ株式会社　ウェルハイム・東京【有料】
+🕐8:45～17:45（休憩60分）
+👛時給1,950円〜
+📜正看護師, 准看護師</div>
+    <p style="font-size:12px;color:var(--text-sub);">使用する項目：カルーセル用タイトル・施設名・施設形態・勤務時間・給与・資格</p>
+    <div class="tip">
+      <span class="tip-icon">💡</span>
+      <span>カルーセル用タイトルは各求人エントリー内の一番上のフィールドで設定します。タイトルは40字以内が推奨です。</span>
+    </div>
+  </div>
+
+  <div class="card">
+    <h3><span class="badge badge-detail">求人詳細</span> 📄 求人詳細メッセージ</h3>
+    <p>ワーカーが「詳細を知りたい」と回答した際に送る、担当者名入りの詳細メッセージです。</p>
+    <div class="output-example">こんにちは！
+タスタスキャリアアドバイザーの<span class="hl">伊東</span>です。
+「<span class="hl">介護老人保健施設レーベンハウス</span>」の詳細をお送りします。
+・施設名：介護老人保健施設レーベンハウス
+・住所：<span class="placeholder">【手動で入力してください】</span>
+・アクセス：<span class="placeholder">【手動で入力してください】</span>
+・業務内容
+<span class="placeholder">【手動で入力してください】</span>
+・時間：8:45～17:45（休憩60分）
+・勤務回数：週3日〜
+・勤務開始日：即日
+・勤務期間：<span class="placeholder">【手動で入力してください】</span>
+・応募条件：正看護師, 准看護師
+・時給：1,950円〜
+
+以上になります。
+他に知りたい情報ある場合やお仕事に関して相談したい場合は、お気軽にLINEのメッセージからご連絡ください！</div>
+    <div class="warn">
+      <span class="tip-icon">⚠️</span>
+      <span><span class="placeholder" style="color:#e8837c;">【手動で入力してください】</span> と表示されている箇所は、スプシにデータがない項目です。コピー後にテキストを書き換えてください。</span>
+    </div>
+    <div class="tip">
+      <span class="tip-icon">💡</span>
+      <span>担当者名は「👤 担当者」カードのプルダウンから選択するか、手入力で設定します。設定を忘れると <span class="placeholder" style="color:#e8837c;">【手動で入力してください】</span> になります。</span>
+    </div>
+  </div>
+</div>
+
+<!-- ===== 6. COPY & DL ===== -->
+<div class="section" id="copy-dl">
+  <div class="section-header">
+    <span class="section-num">6</span>
+    <span class="section-title">コピー＆ダウンロード</span>
+  </div>
+
+  <div class="card">
+    <h3>📋 テキストのコピー</h3>
+    <p>生成後、右側のプレビューエリアに求人ごとにカードが表示されます。</p>
+    <div class="ui-mock">
+      <span class="ui-mock-label">プレビューエリア</span>
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;">
+        <span style="font-size:11px;font-weight:700;color:var(--text-sub);">求人 1</span>
+        <span>
+          <span class="ui-mock-btn green" style="padding:4px 12px;font-size:11px;">コピー</span>
+          <span class="ui-mock-btn" style="padding:4px 12px;font-size:11px;background:var(--brown);">💾 .txt</span>
+        </span>
+      </div>
+      <div class="ui-mock-preview">ウェルライフ株式会社　ウェルハイム・東京【有料】
+🕐8:45～17:45（休憩60分）
+👛時給1,950円〜</div>
+    </div>
+    <table class="compare-table">
+      <tr><th>ボタン</th><th>機能</th></tr>
+      <tr><td><strong>コピー</strong>（各カード）</td><td>その求人のテキストだけをクリップボードにコピー</td></tr>
+      <tr><td><strong>💾 .txt</strong>（各カード）</td><td>施設名をファイル名にした .txt ファイルをダウンロード</td></tr>
+      <tr><td><strong>📋 全求人をまとめてコピー</strong>（下部）</td><td>全求人のテキストを一括でコピー</td></tr>
+    </table>
+  </div>
+</div>
+
+<!-- ===== 7. SETTINGS ===== -->
+<div class="section" id="settings">
+  <div class="section-header">
+    <span class="section-num">7</span>
+    <span class="section-title">リスト編集（担当者・施設形態）</span>
+  </div>
+
+  <div class="card">
+    <h3>⚙️ プルダウンの項目を編集する</h3>
+    <p>担当者リストと施設形態リストは、ツール上から自由に追加・削除できます。</p>
+
+    <div class="steps" style="margin-top:12px;">
+      <div class="step">
+        <div class="step-num">1</div>
+        <div class="step-body">
+          <strong>「⚙ リスト編集」をクリック</strong>
+          <p>担当者カード / 施設形態カードの下にある「⚙ リスト編集」をクリックして開きます。</p>
+        </div>
+      </div>
+      <div class="step">
+        <div class="step-num">2</div>
+        <div class="step-body">
+          <strong>追加：入力欄に名前を入力 →「追加」</strong>
+          <p>新しい担当者名や施設形態を入力して「追加」ボタンを押します。</p>
+        </div>
+      </div>
+      <div class="step">
+        <div class="step-num">3</div>
+        <div class="step-body">
+          <strong>削除：タグの「✕」をクリック</strong>
+          <p>不要な項目のタグにある ✕ ボタンを押すと削除されます。</p>
+        </div>
+      </div>
+    </div>
+
+    <div class="tip">
+      <span class="tip-icon">💡</span>
+      <span>変更内容はブラウザに自動保存されます。次回アクセス時もそのまま反映されています。<br>※別のブラウザ・別のPCでは保存されません。端末ごとに設定してください。</span>
+    </div>
+  </div>
+</div>
+
+<!-- ===== 8. GAS SETUP ===== -->
+<div class="section" id="gas-setup">
+  <div class="section-header">
+    <span class="section-num">8</span>
+    <span class="section-title">GAS API 初期設定（スプシ連携用）</span>
+  </div>
+
+  <div class="card">
+    <h3>🔧 スプレッドシート側の設定（管理者が1回だけ実施）</h3>
+    <div class="steps">
+      <div class="step">
+        <div class="step-num">1</div>
+        <div class="step-body">
+          <strong>スプレッドシートで Apps Script を開く</strong>
+          <p>メニュー「拡張機能」→「Apps Script」をクリック。</p>
+        </div>
+      </div>
+      <div class="step">
+        <div class="step-num">2</div>
+        <div class="step-body">
+          <strong>gas-api.gs のコードを貼り付けて保存</strong>
+          <p>GitHubリポジトリにある <code style="background:#eee;padding:1px 6px;border-radius:4px;">gas-api.gs</code> の中身をまるごとコピーして貼り付けます。</p>
+        </div>
+      </div>
+      <div class="step">
+        <div class="step-num">3</div>
+        <div class="step-body">
+          <strong>「デプロイ」→「新しいデプロイ」</strong>
+          <p>種類：<strong>ウェブアプリ</strong><br>
+          実行するユーザー：<strong>自分</strong><br>
+          アクセスできるユーザー：<strong>全員</strong></p>
+        </div>
+      </div>
+      <div class="step">
+        <div class="step-num">4</div>
+        <div class="step-body">
+          <strong>発行されたURLをコピー</strong>
+          <p><code style="background:#eee;padding:1px 6px;border-radius:4px;font-size:11px;">https://script.google.com/macros/s/xxxxx/exec</code> 形式のURLです。「ウェブアプリ」のURLを使ってください。</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="card">
+    <h3>🌐 ツール側の設定（各ユーザーが1回だけ実施）</h3>
+    <div class="steps">
+      <div class="step">
+        <div class="step-num">1</div>
+        <div class="step-body">
+          <strong>「🔗 スプシ連携（ベータ版）」タブを選択</strong>
+          <p>画面上部のタブを切り替えます。</p>
+        </div>
+      </div>
+      <div class="step">
+        <div class="step-num">2</div>
+        <div class="step-body">
+          <strong>「GAS WebアプリURL」欄に貼り付け</strong>
+          <p>管理者から共有されたURLを入力します。一度入力すればブラウザに保存されます。</p>
+        </div>
+      </div>
+    </div>
+    <div class="warn">
+      <span class="tip-icon">⚠️</span>
+      <span>GASのコードを変更した場合は「デプロイを管理」→「新しいバージョン」で再デプロイが必要です。スプシのデータ変更だけなら再デプロイは不要で、即座に反映されます。</span>
+    </div>
+  </div>
+</div>
+
+<!-- FOOTER -->
+<div style="text-align:center;padding:40px 0 0;font-size:12px;color:var(--text-sub);">
+  <p>📋 求人LINE配信テキスト生成ツール マニュアル</p>
+  <p style="margin-top:4px;">最終更新: 2026年3月</p>
+</div>
+
+</div>
+</body>
+</html>

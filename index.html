@@ -27,6 +27,8 @@
   .header::after{content:'';position:absolute;top:-40%;right:-10%;width:300px;height:300px;background:rgba(255,255,255,0.07);border-radius:50%;}
   .header h1{font-family:'M PLUS Rounded 1c','Noto Sans JP',sans-serif;font-size:22px;font-weight:700;position:relative;z-index:1;}
   .header p{font-size:13px;opacity:0.85;margin-top:4px;position:relative;z-index:1;}
+  .manual-link{position:absolute;top:16px;right:20px;background:rgba(255,255,255,0.2);color:#fff;text-decoration:none;padding:6px 14px;border-radius:20px;font-size:12px;font-weight:600;z-index:1;transition:background 0.2s;}
+  .manual-link:hover{background:rgba(255,255,255,0.35);}
 
   /* LAYOUT */
   .container{max-width:960px;margin:0 auto;padding:24px 16px 80px;}
@@ -158,6 +160,7 @@
 <div class="header">
   <h1>📋 求人LINE配信テキスト生成</h1>
   <p>タスワークBOシート → LINEメッセージへ</p>
+  <a href="manual.html" target="_blank" class="manual-link">📖 操作マニュアル</a>
 </div>
 <div class="container">
   <div class="mode-toggle">
@@ -824,9 +827,17 @@ async function fetchRows(){
 }
 
 async function fetchList(){
-  const btn=document.getElementById('listBtn');
-  btn.textContent='読み込み中...'; btn.disabled=true;
   const area=document.getElementById('api-list-area');
+  const btn=document.getElementById('listBtn');
+
+  // すでに表示中なら非表示にする
+  if(area.style.display==='block'){
+    area.style.display='none';
+    btn.textContent='📋 クライアント一覧を表示';
+    return;
+  }
+
+  btn.textContent='読み込み中...'; btn.disabled=true;
   const list=document.getElementById('api-list');
 
   try{
@@ -845,10 +856,12 @@ async function fetchList(){
         </div>
       `).join('');
     }
+    btn.textContent='📋 クライアント一覧を非表示';
   }catch(e){
     showToast('一覧取得エラー: '+e.message);
+    btn.textContent='📋 クライアント一覧を表示';
   }
-  btn.textContent='📋 クライアント一覧を表示'; btn.disabled=false;
+  btn.disabled=false;
 }
 
 // Init
