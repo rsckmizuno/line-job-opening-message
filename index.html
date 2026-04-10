@@ -694,7 +694,7 @@ function parseSpreadsheetRow(text){
 }
 function parseOneSlot(text){
   if(!text||!text.trim()) return null;
-  const COL={name:3,facility:7,cert:18,time:19,minDays:20,pay:25,startDate:27};
+  const COL={name:3,facility:7,cert:19,time:20,minDays:21,pay:26,startDate:28};
   const tabCount=(text.match(/\t/g)||[]).length;
   if(tabCount>=10){
     const cols=parseSpreadsheetRow(text);
